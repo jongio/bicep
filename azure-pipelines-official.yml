@@ -32,6 +32,10 @@ jobs:
     vmImage: $(os)
 
   steps:
+  - checkout: self
+    clean: true
+    submodules: true
+
   - task: UseDotNet@2
     displayName: Setup .NET Core
     inputs:
