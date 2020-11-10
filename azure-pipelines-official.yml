@@ -4,16 +4,50 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- main
 
-pool:
-  vmImage: 'ubuntu-latest'
+jobs:
+- job: BuildBicep  
+  displayName: Build CLI
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  strategy:
+    matrix:
+      WINDOWS:
+        os: 'windows-latest'
+        rid: 'win-x64'
+        configuration: 'release'
+        publishLanguageServer: 'false'
+      LINUX:
+        os: 'ubuntu-latest'
+        rid: 'linux-x64'
+        configuration: 'release'
+        publishLanguageServer: 'true'
+      MAC:
+        os: 'macOS-latest'
+        rid: 'osx-x64'
+        configuration: 'release'
+        publishLanguageServer: 'false'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  pool:
+    vmImage: $(os)
+
+  steps:
+  - task: UseDotNet@2
+    displayName: Setup .NET Core
+    inputs:
+      packageType: sdk
+      version: 3.1.301
+      installationPath: $(Agent.TempDirectory)/dotnet
+  
+  - script: dotnet build --configuration $(configuration)
+    displayName: Build
+  
+  - script: dotnet test --configuration $(configuration) --collect:"XPlat Code Coverage" --settings ./.github/workflows/codecov.runsettings
+    displayName: Test
+  
+  - script: dotnet publish --configuration $(configuration) ./src/Bicep.LangServer/Bicep.LangServer.csproj
+    displayName: Publish Language Server
+    condition: eq(variables.configuration, true)
+
+  - script: dotnet publish --configuration $(configuration) --self-contained true -p:PublishTrimmed=true -p:PublishSingleFile=true -r $(rid) ./src/Bicep.Cli/Bicep.Cli.csproj
+    displayName: Publish Bicep
