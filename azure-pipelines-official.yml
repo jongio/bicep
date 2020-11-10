@@ -12,17 +12,17 @@ jobs:
 
   strategy:
     matrix:
-      WINDOWS:
+      windows:
         os: 'windows-latest'
         rid: 'win-x64'
         configuration: 'release'
         publishLanguageServer: 'false'
-      LINUX:
+      linux:
         os: 'ubuntu-latest'
         rid: 'linux-x64'
         configuration: 'release'
         publishLanguageServer: 'true'
-      MAC:
+      mac:
         os: 'macOS-latest'
         rid: 'osx-x64'
         configuration: 'release'
